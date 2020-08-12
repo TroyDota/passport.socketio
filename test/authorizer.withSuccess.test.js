@@ -1,111 +1,97 @@
-var fixture = require("./fixture"),
-  request = require("request"),
-  setSocketIOHandshakeCookies = require("./fixture/setSocketIOHandshakeCookies");
+var fixture = require('./fixture'),
+  request = require('request'),
+  setSocketIOHandshakeCookies = require('./fixture/setSocketIOHandshakeCookies');
 
-var io = require("socket.io-client");
+var io = require('socket.io-client');
 
-describe("authorizer with success callback", function () {
+describe('authorizer with success callback', function () {
+
   //stop the server
   afterEach(fixture.stop);
 
-  //start the server
+  //start the server 
   //create a new session for every test
-  beforeEach(function (done) {
+  beforeEach(function(done){
     this.cookies = request.jar();
     setSocketIOHandshakeCookies(this.cookies);
 
-    fixture.start(
-      {
-        success: function (data, accept) {
-          this.accept = accept;
-        }.bind(this),
-      },
-      done
-    );
+    fixture.start({
+      success: function(data, accept){
+        this.accept = accept;
+      }.bind(this)
+    }, done);
+
   });
 
-  it("should call the success function with accept", function (done) {
-    request.post(
-      {
-        jar: this.cookies,
-        url: "http://localhost:9000/login",
-        form: { username: "jose", password: "Pa123" },
-      },
-      function () {
-        io.connect("http://localhost:9000", { "force new connection": true });
-        setTimeout(
-          function () {
-            this.accept.should.be.instanceOf(Function);
 
-            done();
-          }.bind(this),
-          300
-        );
-      }.bind(this)
-    );
+  it('should call the success function with accept', function (done){
+    request.post({
+      jar: this.cookies,
+      url: 'http://localhost:9000/login',
+      form: {username: 'jose', password: 'Pa123'}
+    }, function(){
+
+      io.connect('http://localhost:9000', {'force new connection':true});
+      setTimeout(function(){
+
+        this.accept
+          .should.be.instanceOf(Function);
+        
+        done();
+
+      }.bind(this), 300);
+    
+    }.bind(this));
   });
 
-  it("should not connect until calling the accept function", function (done) {
-    request.post(
-      {
-        jar: this.cookies,
-        url: "http://localhost:9000/login",
-        form: { username: "jose", password: "Pa123" },
-      },
-      function () {
-        var connected = false,
-          socket = io.connect("http://localhost:9000", {
-            "force new connection": true,
-          });
 
-        socket
-          .on("connect", function () {
-            connected = true;
-          })
-          .on("error", done);
+  it('should not connect until calling the accept function', function (done){
+    request.post({
+      jar: this.cookies,
+      url: 'http://localhost:9000/login',
+      form: {username: 'jose', password: 'Pa123'}
+    }, function(){
 
-        setTimeout(
-          function () {
-            connected.should.be.false;
-            done();
-          }.bind(this),
-          300
-        );
-      }.bind(this)
-    );
+      var connected = false,
+          socket = io.connect('http://localhost:9000', {'force new connection':true});
+
+      socket.on('connect', function(){
+        connected = true;
+      }).on('error', done);
+
+      setTimeout(function(){
+        connected.should.be.false;
+        done();
+      }.bind(this), 300);
+    
+    }.bind(this));
   });
 
-  it("should connect after calling the accept function", function (done) {
-    request.post(
-      {
-        jar: this.cookies,
-        url: "http://localhost:9000/login",
-        form: { username: "jose", password: "Pa123" },
-      },
-      function () {
-        var connected = false,
-          socket = io.connect("http://localhost:9000", {
-            "force new connection": true,
-          });
+  it('should connect after calling the accept function', function (done){
+    request.post({
+      jar: this.cookies,
+      url: 'http://localhost:9000/login',
+      form: {username: 'jose', password: 'Pa123'}
+    }, function(){
 
-        socket
-          .on("connect", function () {
-            connected = true;
-          })
-          .on("error", done);
+      var connected = false,
+          socket = io.connect('http://localhost:9000', {'force new connection':true});
 
-        setTimeout(
-          function () {
-            this.accept(null, true);
+      socket.on('connect', function(){
+        connected = true;
+      }).on('error', done);
 
-            setTimeout(function () {
-              connected.should.be.true;
-              done();
-            }, 200);
-          }.bind(this),
-          200
-        );
-      }.bind(this)
-    );
+
+      setTimeout(function(){
+        this.accept(null, true);
+
+        setTimeout(function(){
+          connected.should.be.true;
+          done();
+        }, 200);
+
+      }.bind(this), 200);
+    
+    }.bind(this));
   });
 });
